@@ -41,7 +41,22 @@ def new_trajectory_joint_values(move_group):
 
     return newPath
 
-async def example_moves(move_group,path):
+def new_trajectory_cartesian_path(end_effector):
+    i = 1;
+    input("Move Robot Arm to viewpoint %d, and press Enter to continue..." %i)
+    startingPoint = end_effector.get_current_pose()
+    newPath = [startingPoint]
+    while True:
+        i += 1
+        inst = input("Move Robot to viewpoint %d, and press Enter to continue...\nOtherwise, enter 'end' to finish\n" %i)
+        if inst == 'end':
+            break
+        newPath = newPath.append(end_effector.get_current_pose())
+        cartesian_path = CartesianPath(newPath)
+
+    return cartesian_path
+
+async def joint_moves(move_group,path):
     velocity = input("enter desired velocity (float point number range 0-1):")
     while True:
         instruction = input("Enter Command: ")
@@ -55,6 +70,33 @@ async def example_moves(move_group,path):
                 print('There are %d viewpoints, please enter a valid number' %len(view_points))
         elif instruction == "e":
             await move_group.move_joints(path, velocity_scaling = velocity)
+        elif instruction == "v":
+            new_velocity = input('current velocity is: %d, enter new velocity (float point number range 0-1):' %velocity)
+            if new_velocity>0 and new_velocity<=1:
+                velocity = new_velocity
+            else:
+                print('please enter a valid number')
+        elif instruction == "s":
+            name = input("Enter the name of the path you want to save: ")
+            file_path = open('%s.obj'%name, 'wb') 
+            pickle.dump(path, file_path)
+        elif instruction == "q":
+            break
+    
+async def cartesian_moves(end_effector,path):
+    velocity = input("enter desired velocity (float point number range 0-1):")
+    while True:
+        instruction = input("Enter Command: ")
+        if instruction.isdigit():
+            view_points = path.points
+            num = int(instruction)
+            if num <= len(view_points):
+                print('--- Going to Viewpoint %d---' %num)
+                await end_effector.move_poses(path.points[num-1], velocity_scaling = velocity)
+            else:
+                print('There are %d viewpoints, please enter a valid number' %len(view_points))
+        elif instruction == "e":
+            await end_effector.move_poses(path, velocity_scaling = velocity)
         elif instruction == "v":
             new_velocity = input('current velocity is: %d, enter new velocity (float point number range 0-1):' %velocity)
             if new_velocity>0 and new_velocity<=1:
@@ -104,17 +146,17 @@ def main():
     loop = asyncio.get_event_loop()
     register_asyncio_shutdown_handler(loop)
 
-    #new_joint_path = new_trajectory_joint_values(move_group)
-    try:
-        file_path = open('foo.obj', 'rb') 
-    except:
-        print('error')
-        load_path=example_path
-    else:
-        load_path = pickle.load(file_path)
+    new_cartesian_path = new_trajectory_cartesian_path(end_effector)
+    # try:
+    #     file_path = open('foo.obj', 'rb') 
+    # except:
+    #     print('error')
+    #     load_path=example_path
+    # else:
+    #     load_path = pickle.load(file_path)
 
     try:
-        loop.run_until_complete(example_moves(move_group,load_path))
+        loop.run_until_complete(cartesian_moves(end_effector,new_cartesian_path))
     finally:
         loop.close()
         print("Finished")
