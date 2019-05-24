@@ -1,31 +1,18 @@
-from xamla_motion.data_types import Pose, CartesianPath, JointPath
-from xamla_motion.motion_client import MoveGroup, EndEffector
-from pyquaternion import Quaternion
-import signal
-import functools
 import asyncio
 
-
-# function to shutdown asyncio properly
-def shutdown(loop, reason):
-    print('shutdown asyncio due to : {}'.format(reason), flush=True)
-    tasks = asyncio.gather(*asyncio.Task.all_tasks(loop=loop),
-                           loop=loop, return_exceptions=True)
-    tasks.add_done_callback(lambda t: loop.stop())
-    tasks.cancel()
-
-    # Keep the event loop running until it is either destroyed or all
-    # tasks have really terminated
-    while not tasks.done() and not loop.is_closed():
-        loop.run_forever()
-
+from pyquaternion import Quaternion
+from xamla_motion.data_types import CartesianPath, JointPath, Pose
+from xamla_motion.motion_client import EndEffector, MoveGroup
+from xamla_motion.utility import register_asyncio_shutdown_handler
 
 # functions for supervised executation
+
+
 async def next(stepped_motion_client):
     while True:
         await asyncio.sleep(0.1)
         if stepped_motion_client.state:
-            stepped_motion_client.next()
+            stepped_motion_client.step()
             print('progress {:5.2f} percent'.format(
                 stepped_motion_client.state.progress))
 
@@ -50,7 +37,6 @@ def main():
     # create cartesian path and equivalent joint path
     t1 = [0.502522, 0.2580, 0.3670]
     q1 = Quaternion(w=0.304389, x=0.5272, y=0.68704, z=0.39666)
-    
 
     t2 = [0.23795, 0.46845, 0.44505]
     q2 = Quaternion(w=0.212097, x=0.470916, y=0.720915, z=0.462096)
@@ -68,49 +54,45 @@ def main():
                                                       False).path
 
     loop = asyncio.get_event_loop()
-    loop.add_signal_handler(signal.SIGTERM,
-                            functools.partial(shutdown, loop, signal.SIGTERM))
-    loop.add_signal_handler(signal.SIGINT,
-                            functools.partial(shutdown, loop, signal.SIGINT))
+    register_asyncio_shutdown_handler(loop)
 
-    try:
+    async def example_moves():
         print('test MoveGroup class')
         print('----------------          move joints                 -------------------')
-        loop.run_until_complete(
-            move_group.move_joints(joint_path,velocity_scaling = 0.1))
+        await move_group.move_joints(joint_path)
+
         print('----------------      move joints collision free      -------------------')
-        loop.run_until_complete(
-            move_group.move_joints_collision_free(joint_path,velocity_scaling = 0.1))
+        await move_group.move_joints_collision_free(joint_path)
 
-        # print('----------------        move joints supervised        -------------------')
-        # stepped_motion_client = move_group.move_joints_supervised(
-        #     joint_path, 0.5)
-        # loop.run_until_complete(run_supervised(stepped_motion_client))
+        print('----------------        move joints supervised        -------------------')
+        stepped_motion_client = move_group.move_joints_supervised(
+            joint_path, 0.5)
+        await run_supervised(stepped_motion_client)
 
-        # print('----------------move joints collision free supervised -------------------')
-        # stepped_motion_client = move_group.move_joints_collision_free_supervised(
-        #     joint_path, 0.5)
-        # loop.run_until_complete(run_supervised(stepped_motion_client))
+        print('----------------move joints collision free supervised -------------------')
+        stepped_motion_client = move_group.move_joints_collision_free_supervised(
+            joint_path, 0.5)
+        await run_supervised(stepped_motion_client)
 
         print('test EndEffector class')
         print('----------------           move poses                 -------------------')
-        loop.run_until_complete(
-            end_effector.move_poses_collision_free(cartesian_path))
+        await end_effector.move_poses(cartesian_path)
 
         print('----------------        move poses collision free     -------------------')
-        loop.run_until_complete(
-            end_effector.move_poses_collision_free(cartesian_path))
+        await end_effector.move_poses_collision_free(cartesian_path)
 
-        # print('----------------          move poses supervised       -------------------')
-        # stepped_motion_client = end_effector.move_poses_supervised(
-        #     cartesian_path, None, 0.5)
-        # loop.run_until_complete(run_supervised(stepped_motion_client))
+        print('----------------          move poses supervised       -------------------')
+        stepped_motion_client = end_effector.move_poses_supervised(
+            cartesian_path, None, 0.5)
+        await run_supervised(stepped_motion_client)
 
-        # print('---------------- move poses collision free supervised -------------------')
-        # stepped_motion_client = end_effector.move_poses_collision_free_supervised(
-        #     cartesian_path, None, 0.5)
-        # loop.run_until_complete(run_supervised(stepped_motion_client))
+        print('---------------- move poses collision free supervised -------------------')
+        stepped_motion_client = end_effector.move_poses_collision_free_supervised(
+            cartesian_path, None, 0.5)
+        await run_supervised(stepped_motion_client)
 
+    try:
+        loop.run_until_complete(example_moves())
     finally:
         loop.close()
 
