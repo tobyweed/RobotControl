@@ -51,8 +51,8 @@ def new_trajectory_cartesian_path(end_effector):
         inst = input("Move Robot to viewpoint %d, and press Enter to continue...\nOtherwise, enter 'end' to finish\n" %i)
         if inst == 'end':
             break
-        newPath = newPath.append(end_effector.get_current_pose())
-        cartesian_path = CartesianPath(newPath)
+        newPath.append(end_effector.get_current_pose())
+    cartesian_path = CartesianPath(newPath)
 
     return cartesian_path
 
@@ -71,15 +71,16 @@ async def joint_moves(move_group,path):
         elif instruction == "e":
             await move_group.move_joints(path, velocity_scaling = velocity)
         elif instruction == "v":
-            new_velocity = input('current velocity is: %d, enter new velocity (float point number range 0-1):' %velocity)
+            new_velocity = float(input('current velocity is: %s, enter new velocity (float point number range 0-1):' %velocity))
             if new_velocity>0 and new_velocity<=1:
-                velocity = new_velocity
+                velocity = str(new_velocity)
             else:
                 print('please enter a valid number')
         elif instruction == "s":
-            name = input("Enter the name of the path you want to save: ")
+            name = input("Enter the name of the path: ")
             file_path = open('%s.obj'%name, 'wb') 
             pickle.dump(path, file_path)
+            print('saved as %s.obj\n'%name)
         elif instruction == "q":
             break
     
@@ -98,15 +99,16 @@ async def cartesian_moves(end_effector,path):
         elif instruction == "e":
             await end_effector.move_poses(path, velocity_scaling = velocity)
         elif instruction == "v":
-            new_velocity = input('current velocity is: %d, enter new velocity (float point number range 0-1):' %velocity)
+            new_velocity = int(input('current velocity is: %s, enter new velocity (float point number range 0-1):' %velocity))
             if new_velocity>0 and new_velocity<=1:
-                velocity = new_velocity
+                velocity = str(new_velocity)
             else:
                 print('please enter a valid number')
         elif instruction == "s":
-            name = input("Enter the name of the path you want to save: ")
+            name = input("Enter the name of the path: ")
             file_path = open('%s.obj'%name, 'wb') 
             pickle.dump(path, file_path)
+            print('saved as %s.obj\n'%name)
         elif instruction == "q":
             break
 
@@ -146,7 +148,7 @@ def main():
     loop = asyncio.get_event_loop()
     register_asyncio_shutdown_handler(loop)
 
-    new_cartesian_path = new_trajectory_cartesian_path(end_effector)
+    new_path = new_trajectory_joint_values(move_group)
     # try:
     #     file_path = open('foo.obj', 'rb') 
     # except:
@@ -156,7 +158,7 @@ def main():
     #     load_path = pickle.load(file_path)
 
     try:
-        loop.run_until_complete(cartesian_moves(end_effector,new_cartesian_path))
+        loop.run_until_complete(joint_moves(move_group,new_path))
     finally:
         loop.close()
         print("Finished")
