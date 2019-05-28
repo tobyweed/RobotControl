@@ -83,6 +83,13 @@ async def joint_moves(move_group,path):
             print('saved as %s.obj\n'%name)
         elif instruction == "q":
             break
+        else:
+            print("""usage: - e: execute the path from the beginning
+                            - number: go to specified viewpoint
+                            - v: change the velocity
+                            - s: save the path to local directory
+                            - q: quit the program""")
+
     
 async def cartesian_moves(end_effector,path):
     velocity = input("enter desired velocity (float point number range 0-1):")
