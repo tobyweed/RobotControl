@@ -1,34 +1,46 @@
 #!/usr/bin/env python3
 
+import asyncio
+import pickle
+import sys
+from pyquaternion import Quaternion
+from xamla_motion.data_types import CartesianPath, JointPath, Pose, JointValues
+from xamla_motion.motion_client import EndEffector, MoveGroup
+from xamla_motion.utility import register_asyncio_shutdown_handler
 import socket
 
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
 
-
-def foo1(client):
-    print('I am a')
-    client.sendall(b'foo1')
-
-def foo2(client):
-    print('I am b')
-    client.sendall(b'foo2')
-
-if __name__ == '__main__':
+def newPath():
+    i = 0;
     while True:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind((HOST, PORT))
-            s.listen()
-            conn, addr = s.accept()
-            with conn:
-                print('Connected by', addr)
-                while True:
-                    data = conn.recv(1024)
-                    if not data:
-                        break
-                    command = data.decode("utf-8")
-                    if command == 'a':
-                        foo1(conn)
-                    else:
-                        foo2(conn)
+        client = client_socket()
+        data = client.recv(1024)
+        mode = data.decode("utf-8")
+        if command == 'new':
+            newPath()
+        else:
+            loadPath(pathName)
+
+
+def client_socket():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((HOST, PORT))
+    s.listen()
+    conn,addr = s.accept()
+    return conn
+    
+if __name__ == '__main__':
+
+    client = client_socket()
+    data = client.recv(1024)
+    mode = data.decode("utf-8")
+    if command == 'new':
+        print('foo1')
+        #path = newPath()
+    else:
+        print('foo2')
+#        path = loadPath(pathName)
+                        
