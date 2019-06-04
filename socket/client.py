@@ -4,8 +4,7 @@ import socket
 import sys
 
 HOST = '127.0.0.1'  # The server's hostname or IP address
-PORT = 30006 # The port used by the server
-PORT2 = 30007
+PORT = 50001 # The port used by the server
 
 if __name__ == '__main__':
 
@@ -29,24 +28,11 @@ if __name__ == '__main__':
     print(data.decode("utf-8"))
     
     while True:
-        command = input()
+        command = input("Enter Command:")
         if not command:
             command = 'foo'
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((HOST, PORT))
-            s.send(command.encode("utf-8"))
-            data = s.recv(1024)
-        print(data.decode("utf-8"))
-        if(command == "end"):
-            break
-
-    while True:
-        command = input("Enter Command:")
-        if command=='':
-            command = 'foo'
-        print(command)
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((HOST, PORT2))
             s.send(command.encode("utf-8"))
             data = s.recv(1024)
         print(data.decode("utf-8"))
