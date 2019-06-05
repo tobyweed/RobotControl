@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# RobotImitation 
 
 import asyncio
 import pickle
@@ -17,7 +18,8 @@ PORT = 50001        # Port to listen on (non-privileged ports are > 1023)
 def newPath(move_group):
     i = 0;
     new_path = []
-    while True:
+    running = True;
+    while running:
         time.sleep(0.5)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -32,20 +34,21 @@ def newPath(move_group):
                 command = data.decode("utf-8")
                 if command == 'end':
                     new_path = JointPath(new_path[0].joint_set,new_path)
+                    running = False
                     conn.sendall(b"path successfully created, now enter your command")
                 else:
                     new_path.append(move_group.get_current_joint_positions())
+                    conn.sendall(b"Sucessfully set viewpoint %d" %i)
                     i+=1
-                    conn.sendall(b"Move Robot Arm to viewpoint %d, and press Enter to continue..." %i)
             conn.close()
         s.close()
-        if command == 'end':
-            return new_path
+    return new_path
 
 async def joint_moves(move_group,path):
     velocity = 0.05
     quit = False
-    while True:
+    running = True
+    while running:
         time.sleep(0.5)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((HOST, PORT))
@@ -74,7 +77,7 @@ async def joint_moves(move_group,path):
                         print("--- Finished ---")
                         conn.sendall(b'success')
                     elif instruction == "q":
-                        quit = True
+                        running = False
                         conn.sendall(b'bye')
                     else:
                         split = instruction.split(' ')
@@ -98,8 +101,7 @@ async def joint_moves(move_group,path):
        - v: change the velocity
        - s: save the path to local directory
        - q: quit the program""")
-        if quit:
-            return
+    return
     
 if __name__ == '__main__':
 
@@ -124,7 +126,7 @@ if __name__ == '__main__':
                 break
             pathName = data.decode("utf-8")
             if pathName == 'new':
-                conn.sendall(b'Move Robot Arm to viewpoint 0, and press Enter to continue...')
+                conn.sendall(b'Creating a new path')
             else:
                 try:
                     file_path = open(pathName, 'rb') 
