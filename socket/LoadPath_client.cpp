@@ -44,7 +44,7 @@ int client()
     return sock; 
 } 
 
-extern "C" int sendCommand(char *script){
+int sendCommand(char *script){
   int client_sock = client(), result;
   char buffer[1024] = {0};
   if(client_sock<1)
