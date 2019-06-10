@@ -1,6 +1,6 @@
 // 
 // LoadPath_client.cpp
-// 2019 Middlebury College Summer Research with professor Scharstein
+// 2019 Middlebury College Summer Research with Professor Scharstein
 // Guanghan Pan
 //
 

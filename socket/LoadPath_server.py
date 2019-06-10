@@ -1,5 +1,8 @@
-#!/usr/bin/env python3
 # LoadPath_server.py
+# 2019 Middlebury College Summer Research with Professor Scharstein
+# Guanghan Pan
+
+#!/usr/bin/env python3
 
 import asyncio
 import pickle
@@ -7,19 +10,19 @@ import sys
 import time
 from pyquaternion import Quaternion
 from xamla_motion.data_types import CartesianPath, JointPath, Pose, JointValues
-from xamla_motion.motion_client import EndEffector, MoveGroup
+from xamla_motion.v2.motion_client import EndEffector, MoveGroup
 from xamla_motion.utility import register_asyncio_shutdown_handler
 import socket
 import numpy as np
 import math
 
-HOST = ''  # Standard loopback interface address (localhost)
+HOST = '' 
 PORT = 50001        # Port to listen on (non-privileged ports are > 1023)
 
 async def move_path(move_group):
     velocity = 0.05
     running = True
-    path = ""
+    path = ''
     file_path = open("test.obj", 'rb')
     path = pickle.load(file_path)
     while running:
@@ -61,15 +64,18 @@ async def move_path(move_group):
                         num = int(instruction)
                         if num < len(view_points):
                             print('--- Going to Viewpoint %d---' %num)
-                            await move_group.move_joints_collision_free(view_points[num], velocity_scaling = velocity)
+                            move_joints_cf = move_group.move_joints_collision_free(view_points[num], velocity_scaling = velocity)
+                            await move_joints_cf.plan().execute_async()
                             conn.sendall(b'success')
                         else:
                             conn.sendall(b'There are %d viewpoints, please enter a valid number' %len(view_points))
                     elif instruction == "e":
                         print("--- moving to the first viewpoint ---")
-                        await move_group.move_joints_collision_free(path.points[0], velocity_scaling = velocity)
+                        move_joints_cf =  move_group.move_joints_collision_free(path.points[0], velocity_scaling = velocity)
+                        await move_joints_cf.plan().execute_async()
                         print("--- executing the path ---")
-                        await move_group.move_joints(path, velocity_scaling = velocity)
+                        move_joints = move_group.move_joints(path, velocity_scaling = velocity)
+                        await move_joints.plan().execute_async()
                         print("--- Finished ---")
                         conn.sendall(b'success')
                     elif len(splitins)==2 and splitins[0]=='v':
@@ -118,6 +124,5 @@ if __name__ == '__main__':
 
     try:
         loop.run_until_complete(move_path(move_group))
-        # loop.run_until_complete(cartesian_moves(move_group,path))
     finally:
         loop.close()
