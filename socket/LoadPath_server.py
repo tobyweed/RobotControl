@@ -25,6 +25,7 @@ async def move_path(move_group):
     path = ''
     file_path = open("test.obj", 'rb')
     path = pickle.load(file_path)
+    print(path)
     while running:
         time.sleep(0.5)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -71,7 +72,7 @@ async def move_path(move_group):
                             conn.sendall(b'There are %d viewpoints, please enter a valid number' %len(view_points))
                     elif instruction == "e":
                         print("--- moving to the first viewpoint ---")
-                        move_joints_cf =  move_group.move_joints_collision_free(path.points[0], velocity_scaling = velocity)
+                        move_joints_cf = move_group.move_joints_collision_free(path.points[0], velocity_scaling = velocity)
                         await move_joints_cf.plan().execute_async()
                         print("--- executing the path ---")
                         move_joints = move_group.move_joints(path, velocity_scaling = velocity)
