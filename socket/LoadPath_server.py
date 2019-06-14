@@ -1,4 +1,5 @@
 # LoadPath_server.py
+# A socket server which communicates with MobileLingting to execute saved paths
 # 2019 Middlebury College Summer Research with Professor Scharstein
 # Guanghan Pan
 
@@ -23,9 +24,8 @@ async def move_path(move_group):
     velocity = 0.05
     running = True
     path = ''
-    file_path = open("test.obj", 'rb')
+    file_path = open("paths/test.obj", 'rb')
     path = pickle.load(file_path)
-    print(path)
     while running:
         time.sleep(0.5)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -33,8 +33,6 @@ async def move_path(move_group):
         s.bind((HOST, PORT))
         s.listen()
         s.settimeout(None)
-        # print(s.gettimeout())
-        # print('waiting for connection')
         conn, addr = s.accept()
         with conn:
             while 1:
@@ -47,15 +45,17 @@ async def move_path(move_group):
                 if len(splitins) == 2 and splitins[0] == 'load':
                     # print('loading a path')
                     pathName = splitins[1]
+                    
                     try:
-                        file_path = open(pathName, 'rb') 
+                        file_path = open('paths/'+pathName, 'rb') 
                     except:
                         message = 'An error occurs while loading %s'%pathName
                         conn.sendall(message.encode("utf-8"))
                     else:
-                        message = 'Sucessfully loaded %s'%pathName
-                        conn.sendall(message.encode("utf-8"))
                         path = pickle.load(file_path)
+                        num_views = len(path.points)
+                        message = str(num_views)
+                        conn.sendall(message.encode("utf-8"))
                 elif instruction == "q":
                     running = False
                     conn.sendall(b'bye')

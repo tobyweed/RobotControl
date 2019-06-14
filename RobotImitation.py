@@ -1,3 +1,10 @@
+# RobotImitation.py
+# A local program used to create and execute path for robot arm
+# 2019 Middlebury College Summer Research with Professor Scharstein
+# Guanghan Pan
+
+#!/usr/bin/env python3
+
 import asyncio
 import pickle
 import sys
@@ -120,6 +127,8 @@ async def cartesian_moves(move_group,path):
         elif instruction == "e":
             print("--- moving to the first viewpoint ---")
             move_poses_cf = end_effector.move_cartesian_collision_free(path.points[0], velocity_scaling = velocity)
+            # move_poses_cf = move_poses_cf.with_ik_jump_threshold(2.0)
+            # move_poses_cf.with_ik_jump_threshold('3.0')
             await move_poses_cf.plan().execute_async()
             print("--- executing the path ---")
             move_poses = end_effector.move_cartesian(path, velocity_scaling = velocity)
@@ -160,14 +169,14 @@ if __name__ == '__main__':
     end_effector = move_group.get_end_effector()
 
     if len(sys.argv) == 1:
-        path = new_trajectory_joint_values(move_group)
-        # path = new_trajectory_cartesian_path(move_group)
+        # path = new_trajectory_joint_values(move_group)
+        path = new_trajectory_cartesian_path(move_group)
         # path = end_effector.inverse_kinematics_many(cartesian_path,True,attempts=5).path
 
     if len(sys.argv) == 2:
         name = sys.argv[1]
         try:
-            file_path = open('%s.obj'%name, 'rb') 
+            file_path = open('socket/paths/'+'%s.obj'%name, 'rb') 
         except:
             print('An error occurs while loading %s.obj'%name)
             exit()
@@ -180,7 +189,7 @@ if __name__ == '__main__':
     register_asyncio_shutdown_handler(loop)
 
     try:
-        loop.run_until_complete(joint_moves(move_group,path))
-        # loop.run_until_complete(cartesian_moves(move_group,path))
+        # loop.run_until_complete(joint_moves(move_group,path))
+        loop.run_until_complete(cartesian_moves(move_group,path))
     finally:
         loop.close()
