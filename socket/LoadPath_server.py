@@ -21,11 +21,12 @@ HOST = ''
 PORT = 50001        # Port to listen on (non-privileged ports are > 1023)
 
 async def move_path(move_group):
-    velocity = 0.05
+    velocity = 0.15
     running = True
     path = ''
-    file_path = open("paths/test.obj", 'rb')
+    file_path = open("./paths/default.obj", 'rb')
     path = pickle.load(file_path)
+    views = path['path']
     while running:
         time.sleep(0.5)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -53,7 +54,8 @@ async def move_path(move_group):
                         conn.sendall(message.encode("utf-8"))
                     else:
                         path = pickle.load(file_path)
-                        num_views = len(path.points)
+                        views = path['path']
+                        num_views = len(views.points)
                         message = str(num_views)
                         conn.sendall(message.encode("utf-8"))
                 elif instruction == "q":
@@ -61,7 +63,7 @@ async def move_path(move_group):
                     conn.sendall(b'bye')
                 elif path:
                     if instruction.isdigit():
-                        view_points = path.points
+                        view_points = views.points
                         num = int(instruction)
                         if num < len(view_points):
                             print('--- Going to Viewpoint %d---' %num)
@@ -71,13 +73,16 @@ async def move_path(move_group):
                         else:
                             conn.sendall(b'There are %d viewpoints, please enter a valid number' %len(view_points))
                     elif instruction == "e":
-                        print("--- moving to the first viewpoint ---")
-                        move_joints_cf = move_group.move_joints_collision_free(path.points[0], velocity_scaling = velocity)
-                        await move_joints_cf.plan().execute_async()
                         print("--- executing the path ---")
-                        move_joints = move_group.move_joints(path, velocity_scaling = velocity)
+                        temp_path = views.append(path['end']).prepend(path['start'])
+                        move_joints = move_group.move_joints(temp_path, velocity_scaling = velocity)
                         await move_joints.plan().execute_async()
                         print("--- Finished ---")
+                        conn.sendall(b'success')
+                    elif instruction == "s":
+                        print("--- moving to the starting point ---")
+                        move_joints_cf = move_group.move_joints_collision_free(path['start'], velocity_scaling = velocity)
+                        await move_joints_cf.plan().execute_async()
                         conn.sendall(b'success')
                     elif len(splitins)==2 and splitins[0]=='v':
                         new_velocity = float(splitins[1])
@@ -87,18 +92,23 @@ async def move_path(move_group):
                             conn.sendall(message.encode("utf-8"))
                         else:
                             conn.sendall(b'please enter a valid number, 0-1')
-                    elif len(splitins)==2 and splitins[0]=='r':
-                        degree = float(splitins[1])
-                        radian = degree/180 * math.pi
-                        path = JointPath(path.joint_set,[x.set_values(path.joint_set,x.values+np.array([-radian,0,0,0,0,0])) for x in path.points])
-                        message = 'Successfully rotate path to the right by '+ str(degree) + ' degrees'
-                        conn.sendall(message.encode("utf-8"))
-                    elif len(splitins)==2 and splitins[0]=='l':
-                        degree = float(splitins[1])
-                        radian = degree/180 * math.pi
-                        path = JointPath(path.joint_set,[x.set_values(path.joint_set,x.values+np.array([radian,0,0,0,0,0])) for x in path.points])
-                        message = 'Successfully rotate path to the left by '+ str(degree) + ' degrees'
-                        conn.sendall(message.encode("utf-8"))
+                            
+                    # the rotation function only works for the old path structure
+                    # also the repeatability of robot arm after rotation was not tested
+                    # so I commented out this part of the code
+
+                    # elif len(splitins)==2 and splitins[0]=='r':
+                    #     degree = float(splitins[1])
+                    #     radian = degree/180 * math.pi
+                    #     path = JointPath(path.joint_set,[x.set_values(path.joint_set,x.values+np.array([-radian,0,0,0,0,0])) for x in path.points])
+                    #     message = 'Successfully rotate path to the right by '+ str(degree) + ' degrees'
+                    #     conn.sendall(message.encode("utf-8"))
+                    # elif len(splitins)==2 and splitins[0]=='l':
+                    #     degree = float(splitins[1])
+                    #     radian = degree/180 * math.pi
+                    #     path = JointPath(path.joint_set,[x.set_values(path.joint_set,x.values+np.array([radian,0,0,0,0,0])) for x in path.points])
+                    #     message = 'Successfully rotate path to the left by '+ str(degree) + ' degrees'
+                    #     conn.sendall(message.encode("utf-8"))
                     else:
                         conn.sendall(b'''usage: - e: execute the path from the beginning
        - number: go to specified viewpoint
