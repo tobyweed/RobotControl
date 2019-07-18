@@ -27,13 +27,12 @@ async def move_path(move_group):
     file_path = open("./paths/default.obj", 'rb')
     path = pickle.load(file_path)
     views = path['path']
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind((HOST, PORT))
+    s.listen()
+    s.settimeout(900)
     while running:
-        time.sleep(0.5)
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind((HOST, PORT))
-        s.listen()
-        s.settimeout(None)
         conn, addr = s.accept()
         with conn:
             while 1:
@@ -73,6 +72,9 @@ async def move_path(move_group):
                         else:
                             conn.sendall(b'There are %d viewpoints, please enter a valid number' %len(view_points))
                     elif instruction == "e":
+                        print("--- moving to the starting point ---")
+                        move_joints_cf = move_group.move_joints_collision_free(path['start'], velocity_scaling = 0.4)
+                        await move_joints_cf.plan().execute_async()
                         print("--- executing the path ---")
                         temp_path = views.append(path['end']).prepend(path['start'])
                         move_joints = move_group.move_joints(temp_path, velocity_scaling = velocity)
@@ -118,7 +120,7 @@ async def move_path(move_group):
                 else:
                     conn.sendall(b'NO path is loaded, please load a path first')
             conn.close()
-        s.close()
+    s.close()
 
     return
     

@@ -74,7 +74,7 @@ async def joint_moves(move_group,path):
         if instruction.isdigit():
             view_points = path.points
             num = int(instruction)
-            if num <= len(view_points):
+            if num < len(view_points):
                 print('--- Going to Viewpoint %d---' %num)
                 move_joints_cf = move_group.move_joints_collision_free(view_points[num], velocity_scaling = velocity)
                 await move_joints_cf.plan().execute_async()
