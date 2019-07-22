@@ -103,8 +103,8 @@ if __name__ == '__main__':
     end_effector = move_group.get_end_effector()
 
     view_num = input("Enter the number of view points for the new path:")
-    path = new_path_joint_values(move_group, view_num)
 
+    path = new_path_joint_values(move_group, view_num)
 
     loop = asyncio.get_event_loop()
     register_asyncio_shutdown_handler(loop)
