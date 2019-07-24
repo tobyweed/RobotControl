@@ -37,10 +37,10 @@ async def imitate_move(end_effector,move_group):
                         path = []
                         for pose in pose_list:
                             coordinate = pose[:3]
-                            coordinate[0], coordinate[1],coordinate[2] = -coordinate[0], coordinate[2], coordinate[1]
+                            coordinate[0], coordinate[1],coordinate[2] = coordinate[2], coordinate[0], coordinate[1]
                             coordinate = np.array(coordinate) + start.translation
                             quat_element = pose[3:7]
-                            quat = Quaternion(quat_element[0], -quat_element[1], quat_element[3], quat_element[2])
+                            quat = Quaternion(quat_element[0], quat_element[3], quat_element[1], quat_element[2])
                             quat = quat * start.quaternion
                             pose = Pose(coordinate,quat)
                             path.append(pose)

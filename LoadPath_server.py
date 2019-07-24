@@ -21,7 +21,7 @@ HOST = ''
 PORT = 50001        # Port to listen on (non-privileged ports are > 1023)
 
 async def move_path(move_group):
-    velocity = 0.15
+    velocity = 0.05
     running = True
     path = ''
     file_path = open("./paths/default.obj", 'rb')
@@ -85,6 +85,12 @@ async def move_path(move_group):
                         print("--- moving to the starting point ---")
                         move_joints_cf = move_group.move_joints_collision_free(path['start'], velocity_scaling = velocity)
                         await move_joints_cf.plan().execute_async()
+                        conn.sendall(b'success')
+                    elif instruction == "t":
+                        print("--- executing the recorded trajectory ---")
+                        move_joints = move_group.move_joints(path['traj'], velocity_scaling = velocity)
+                        await move_joints.plan().execute_async()
+                        print("--- Finished ---")
                         conn.sendall(b'success')
                     elif len(splitins)==2 and splitins[0]=='v':
                         new_velocity = float(splitins[1])

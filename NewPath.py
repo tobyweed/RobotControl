@@ -24,7 +24,7 @@ async def test_run(move_group,path,view_num):
             move_joints_cf = move_group.move_joints_collision_free(new_path['start'], velocity_scaling = 0.1)
             await move_joints_cf.plan().execute_async()
             print('start test run')
-            temp_path = new_path['path'].append(path['end'])
+            temp_path = new_path['path'].append(new_path['end'])
             move_joints_cf = move_group.move_joints_collision_free(temp_path)
             move_joints_cf = move_joints_cf.with_velocity_scaling(0.1)
             await move_joints_cf.plan().execute_async()
