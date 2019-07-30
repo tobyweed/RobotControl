@@ -25,8 +25,7 @@ async def imitate_move(end_effector,move_group):
             conn = None
             try:
                 conn, addr = s.accept()
-                with conn:  
-                    print('Connected by', addr)
+                with conn:
                     while True:
                         data = conn.recv(1024)
                         if not data:

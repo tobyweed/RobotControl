@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# python test code for server
+# python test code for MLRobotControl server
 # Guanghan Pan
 
 import socket

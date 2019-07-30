@@ -21,12 +21,12 @@ async def test_run(move_group,path,view_num):
         command = input("Enter command:")
         if command == "e":
             print("--- moving to the start point ---")
-            move_joints_cf = move_group.move_joints_collision_free(new_path['start'], velocity_scaling = 0.1)
+            move_joints_cf = move_group.move_joints_collision_free(new_path['start'], velocity_scaling = 0.2)
             await move_joints_cf.plan().execute_async()
             print('start test run')
             temp_path = new_path['path'].append(new_path['end'])
             move_joints_cf = move_group.move_joints_collision_free(temp_path)
-            move_joints_cf = move_joints_cf.with_velocity_scaling(0.1)
+            move_joints_cf = move_joints_cf.with_velocity_scaling(0.2)
             await move_joints_cf.plan().execute_async()
             print('test run finished')
         elif command.isdigit():
@@ -48,6 +48,8 @@ async def test_run(move_group,path,view_num):
             await move_joints_cf.plan().execute_async()
         elif command == 's':
             name = input("Enter the name of the path: ")
+            if not name:
+                name = "default"
             file_path = open('paths/%s.obj'%name, 'wb') 
             pickle.dump(new_path, file_path)
             print('saved as %s.obj'%name)

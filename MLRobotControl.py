@@ -1,4 +1,4 @@
-# LoadPath_server.py
+# MLRobotControl.py
 # A socket server which communicates with MobileLingting to execute saved paths
 # 2019 Middlebury College Summer Research with Professor Scharstein
 # Guanghan Pan
@@ -17,11 +17,11 @@ import socket
 import numpy as np
 import math
 
-HOST = '' 
+HOST = ''
 PORT = 50001        # Port to listen on (non-privileged ports are > 1023)
 
 async def move_path(move_group):
-    velocity = 0.05
+    velocity = 0.2
     running = True
     path = ''
     file_path = open("./paths/default.obj", 'rb')
@@ -31,7 +31,7 @@ async def move_path(move_group):
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((HOST, PORT))
     s.listen()
-    s.settimeout(900)
+    s.settimeout(None)
     while running:
         conn, addr = s.accept()
         with conn:
@@ -43,7 +43,6 @@ async def move_path(move_group):
                 splitins = instruction.split()
                 print(splitins)
                 if len(splitins) == 2 and splitins[0] == 'load':
-                    # print('loading a path')
                     pathName = splitins[1]
                     
                     try:
@@ -104,7 +103,6 @@ async def move_path(move_group):
                     # the rotation function only works for the old path structure
                     # also the repeatability of robot arm after rotation was not tested
                     # so I commented out this part of the code
-
                     # elif len(splitins)==2 and splitins[0]=='r':
                     #     degree = float(splitins[1])
                     #     radian = degree/180 * math.pi
