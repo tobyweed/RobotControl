@@ -20,7 +20,7 @@ import math
 HOST = ''
 PORT = 50001        # Port to listen on (non-privileged ports are > 1023)
 
-async def move_path(move_group):
+async def start_server(move_group):
     velocity = 0.2
     running = True
     path = ''
@@ -32,6 +32,7 @@ async def move_path(move_group):
     s.bind((HOST, PORT))
     s.listen()
     s.settimeout(None)
+    print("--- MLRobotControl server started ---")
     while running:
         conn, addr = s.accept()
         with conn:
@@ -86,11 +87,17 @@ async def move_path(move_group):
                         await move_joints_cf.plan().execute_async()
                         conn.sendall(b'success')
                     elif instruction == "t":
-                        print("--- executing the recorded trajectory ---")
-                        move_joints = move_group.move_joints(path['traj'], velocity_scaling = velocity)
-                        await move_joints.plan().execute_async()
-                        print("--- Finished ---")
-                        conn.sendall(b'success')
+                        if 'traj' in path:
+                            print("--- moving to the starting point ---")
+                            move_joints_cf = move_group.move_joints_collision_free(path['start'], velocity_scaling = 0.4)
+                            await move_joints_cf.plan().execute_async()
+                            print("--- executing the recorded trajectory ---")
+                            move_joints = move_group.move_joints(path['traj'], velocity_scaling = velocity)
+                            await move_joints.plan().execute_async()
+                            print("--- Finished ---")
+                            conn.sendall(b'success')
+                        else:
+                            conn.sendall(b'The loaded path does not have a SteamVR trajectory')
                     elif len(splitins)==2 and splitins[0]=='v':
                         new_velocity = float(splitins[1])
                         if new_velocity>0 and new_velocity<=1:
@@ -116,10 +123,12 @@ async def move_path(move_group):
                     #     message = 'Successfully rotate path to the left by '+ str(degree) + ' degrees'
                     #     conn.sendall(message.encode("utf-8"))
                     else:
-                        conn.sendall(b'''usage: - e: execute the path from the beginning
+                        conn.sendall(b'''usage: - e: execute the path from the start point
+       - l: execute the recorded trajectory of SteamVR if there is one
        - number: go to specified viewpoint
        - v [value]: change the velocity to specified value
        - load [pathname]: load path with specified path name
+       - s: go to the start point of video
        - q: quit the program''')
                 else:
                     conn.sendall(b'NO path is loaded, please load a path first')
@@ -140,6 +149,6 @@ if __name__ == '__main__':
     
 
     try:
-        loop.run_until_complete(move_path(move_group))
+        loop.run_until_complete(start_server(move_group))
     finally:
         loop.close()

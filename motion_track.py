@@ -10,6 +10,7 @@ import pickle
 import numpy as np
 
 def data_to_joint_path(end_effector,reference,data):
+
     path = []
     
     for pose in data:
