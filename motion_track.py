@@ -1,6 +1,5 @@
 import asyncio
 import sys
-
 from pyquaternion import Quaternion
 from xamla_motion.data_types import CartesianPath, JointPath, Pose
 from xamla_motion.v2.motion_client import EndEffector, MoveGroup
@@ -12,20 +11,31 @@ import numpy as np
 def data_to_joint_path(end_effector,reference,data):
 
     path = []
-    
+
     for pose in data:
         coordinate = pose[:3]
+
+        # The following line should be changed according to current pose and the frame of robot base
         coordinate[0], coordinate[1],coordinate[2] = coordinate[2], coordinate[0], coordinate[1]
+
         coordinate = np.array(coordinate) + reference.translation
         quat_element = pose[3:7]
+
+        # The following line should be changed to match the previous line of coordinate
+        # quat_element[0] should always be the first argument
+        # quat_element[1] refers to x
+        # quat_element[2] refers to y
+        # quat_element[3] refers to z
         quat = Quaternion(quat_element[0], quat_element[3], quat_element[1], quat_element[2])
+
         quat = quat * reference.quaternion
         pose = Pose(coordinate,quat)
         path.append(pose)
-    
+
     cartesian_path = CartesianPath(path)
     joint_path = end_effector.inverse_kinematics_many(cartesian_path,False).path
-    return joint_path 
+
+    return joint_path
 
 def main():
 
@@ -33,7 +43,7 @@ def main():
     move_group = MoveGroup()
     # get default endeffector of the movegroup
     end_effector = move_group.get_end_effector()
-    
+
     if(len(sys.argv)==2):
         try:
             file_path = open('%s'%sys.argv[1], 'rb')
@@ -41,7 +51,10 @@ def main():
             print("file does not exist!")
         else:
             data = pickle.load(file_path)
+
+            input("Move the robot arm to desired reference point, and hit enter")
             reference = end_effector.get_current_pose()
+
             data_joint_path = data_to_joint_path(end_effector,reference,data)
             loop = asyncio.get_event_loop()
             register_asyncio_shutdown_handler(loop)
@@ -85,15 +98,15 @@ def main():
                             await move_joints_cf.plan().execute_async()
                         else:
                             print('There are %d viewpoints, please enter a valid number' %num_views)
-                    elif command == 'start':
+                    elif command == 'start' and start_point:
                         print("--- moving to the start point ---")
                         move_joints_cf = move_group.move_joints_collision_free(start_point, velocity_scaling = 0.2)
                         await move_joints_cf.plan().execute_async()
-                    elif command == 'end':
+                    elif command == 'end' and end_point:
                         print("--- moving to the end point ---")
                         move_joints_cf = move_group.move_joints_collision_free(end_point, velocity_scaling = 0.2)
                         await move_joints_cf.plan().execute_async()
-                    elif command == 's':
+                    elif command == 's' and start_point and end_point and num_views > 0:
                         name = input("Enter the name of the path: ")
                         file_path = open('paths/%s.obj'%name, 'wb')
                         new_path = {'start':start_point, 'end':end_point,'path':JointPath(start_point.joint_set,views),
@@ -133,11 +146,14 @@ def main():
                         break
                     else:
                         print("""usage: - e: execute a test run of path
+                - t: execute the recorded trajectory
+                - t [index number]: go to specified index position of the recorded trajectory
                 - number: go to specified viewpoint
+                - add [index number]: add the specified index position as the next viewpoint
                 - start: go to start point
                 - end: go to end point
-                - set [number | start | end] [index_num]: Set the specified viewpoint to the pose of index number
-                - save: save the path to local directory
+                - set [viewpoint number | start | end] [index number]: Set the specified viewpoint to the pose of index number
+                - s: save the path to local directory
                 - d: discard the path""")
 
             try:
