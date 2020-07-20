@@ -21,10 +21,10 @@ async def test_run(move_group,path,view_num):
         command = input("Enter command:")
         if command == "e":
             print("--- moving to the start point ---")
-            move_joints_cf = move_group.move_joints_collision_free(new_path['start'], velocity_scaling = 0.2)
+            move_joints_cf = move_group.move_joints_collision_free(new_path['joint_values'][0], velocity_scaling = 0.2)
             await move_joints_cf.plan().execute_async()
             print('start test run')
-            temp_path = new_path['path'].append(new_path['end'])
+            temp_path = new_path['joint_values']
             move_joints_cf = move_group.move_joints_collision_free(temp_path)
             move_joints_cf = move_joints_cf.with_velocity_scaling(0.2)
             await move_joints_cf.plan().execute_async()
@@ -32,20 +32,12 @@ async def test_run(move_group,path,view_num):
         elif command.isdigit():
             num = int(command)
             if num < int(view_num):
-                view_points = new_path['path'].points
+                view_points = new_path['joint_values']
                 print('--- Going to Viewpoint %d---' %num)
                 move_joints_cf = move_group.move_joints_collision_free(view_points[num], velocity_scaling = 0.2)
                 await move_joints_cf.plan().execute_async()
             else:
                 print('There are %s viewpoints, please enter a valid number' %view_num)
-        elif command == 'start':
-            print("--- moving to the start point ---")
-            move_joints_cf = move_group.move_joints_collision_free(new_path['start'], velocity_scaling = 0.2)
-            await move_joints_cf.plan().execute_async()
-        elif command == 'end':
-            print("--- moving to the end point ---")
-            move_joints_cf = move_group.move_joints_collision_free(new_path['end'], velocity_scaling = 0.2)
-            await move_joints_cf.plan().execute_async()
         elif command == 's':
             name = input("Enter the name of the path: ")
             if not name:
@@ -75,24 +67,18 @@ async def test_run(move_group,path,view_num):
         else:
             print("""usage: - e: execute a test run of path
        - number: go to specified viewpoint
-       - start: go to start point
-       - end: go to end point
-       - r [number | start | end]: reset the specified viewpoint to current position 
        - s: save the path to local directory
        - d: discard the path""")
 
-def new_path_joint_values(move_group,view_num):
-    input("Move Robot Arm to start point, and press Enter to continue...")
-    start_point = move_group.get_current_joint_positions();
-    new_path = []
+def new_path(move_group, end_effector,view_num):
+    joint_values = []
+    poses = []
     for i in range(int(view_num)):
         inst = input("Move Robot to viewpoint %d, and press Enter to continue..." %i)
-        new_path.append(move_group.get_current_joint_positions())
+        poses.append(end_effector.get_current_pose())
+        joint_values.append(move_group.get_current_joint_positions())
     
-    input("Move Robot Arm to end point, and press Enter to continue...")
-    end_point = move_group.get_current_joint_positions();
-    path = {'start':start_point, 'end':end_point,'path':JointPath(start_point.joint_set,new_path)}
-    
+    path = {'poses':CartesianPath(poses), 'joint_values':JointPath(joint_values[0].joint_set, joint_values)}
     print("successfully created the new path")
 
     return path
@@ -106,7 +92,7 @@ if __name__ == '__main__':
 
     view_num = input("Enter the number of view points for the new path:")
 
-    path = new_path_joint_values(move_group, view_num)
+    path = new_path(move_group, end_effector, view_num)
 
     loop = asyncio.get_event_loop()
     register_asyncio_shutdown_handler(loop)

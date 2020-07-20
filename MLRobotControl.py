@@ -55,6 +55,8 @@ async def start_server(move_group):
                     else:
                         path = pickle.load(file_path)
                         views = path['path']
+                        print(path)
+                        print(views)
                         # num_views = len(views.points)
                         # message = str(num_views)
                         message = json.dumps(views, iterable_as_array=True)
