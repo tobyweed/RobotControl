@@ -27,7 +27,7 @@ async def start_server(move_group):
     path = ''
     file_path = open("./paths/default.obj", 'rb')
     path = pickle.load(file_path)
-    views = path['path']
+    views = path['joint_values']
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((HOST, PORT))
@@ -54,14 +54,16 @@ async def start_server(move_group):
                         conn.sendall(message.encode("utf-8"))
                     else:
                         path = pickle.load(file_path)
-                        views = path['path']
-                        print(path)
-                        print(views)
-                        # num_views = len(views.points)
-                        # message = str(num_views)
-                        message = json.dumps(views, iterable_as_array=True)
+                        joint_values = path['joint_values']
+                        poses = path['poses']
+
+                        # convert Poses into JSON-serializeable objects
+                        json_poses = []
+                        for p in poses:
+                            json_poses.append({ 'translation' : p.translation, 'rotation' : p.rotation_matrix() })
+                        
+                        message = json.dumps(json_poses, iterable_as_array=True)
                         conn.sendall(message.encode("utf-8"))
-                        # conn.sendall(message.encode("utf-8"))
                 elif instruction == "q":
                     running = False
                     conn.sendall(b'bye')
@@ -77,32 +79,16 @@ async def start_server(move_group):
                         else:
                             conn.sendall(b'There are %d viewpoints, please enter a valid number' %len(view_points))
                     elif instruction == "e":
-                        print("--- moving to the starting point ---")
-                        move_joints_cf = move_group.move_joints_collision_free(path['start'], velocity_scaling = 0.4)
+                        print("--- moving to the start point ---")
+                        move_joints_cf = move_group.move_joints_collision_free(path['joint_values'][0], velocity_scaling = 0.2)
                         await move_joints_cf.plan().execute_async()
-                        print("--- executing the path ---")
-                        temp_path = views.append(path['end']).prepend(path['start'])
-                        move_joints = move_group.move_joints(temp_path, velocity_scaling = velocity)
-                        await move_joints.plan().execute_async()
-                        print("--- Finished ---")
-                        conn.sendall(b'success')
-                    elif instruction == "s":
-                        print("--- moving to the starting point ---")
-                        move_joints_cf = move_group.move_joints_collision_free(path['start'], velocity_scaling = velocity)
+                        print("--- executing path ---")
+                        temp_path = path['joint_values']
+                        move_joints_cf = move_group.move_joints_collision_free(temp_path)
+                        move_joints_cf = move_joints_cf.with_velocity_scaling(0.2)
                         await move_joints_cf.plan().execute_async()
+                        print(" --- Finished ---")
                         conn.sendall(b'success')
-                    elif instruction == "t":
-                        if 'traj' in path:
-                            print("--- moving to the starting point ---")
-                            move_joints_cf = move_group.move_joints_collision_free(path['start'], velocity_scaling = 0.4)
-                            await move_joints_cf.plan().execute_async()
-                            print("--- executing the recorded trajectory ---")
-                            move_joints = move_group.move_joints(path['traj'], velocity_scaling = velocity)
-                            await move_joints.plan().execute_async()
-                            print("--- Finished ---")
-                            conn.sendall(b'success')
-                        else:
-                            conn.sendall(b'The loaded path does not have a SteamVR trajectory')
                     elif len(splitins)==2 and splitins[0]=='v':
                         new_velocity = float(splitins[1])
                         if new_velocity>0 and new_velocity<=1:

@@ -46,22 +46,6 @@ async def test_run(move_group,path,view_num):
             pickle.dump(new_path, file_path)
             print('saved as %s.obj'%name)
             break
-        elif len(command.split())==2 and command.split()[0] == "r":
-            if(command.split()[1].isdigit() and int(command.split()[1]) < int(view_num)):
-                temp_path = list(new_path['path'].points)
-                temp_path[int(command.split()[1])] = move_group.get_current_joint_positions()
-                new_path = {'start':new_path['start'], 'end':new_path['end'],'path':JointPath(new_path['start'].joint_set,temp_path)}
-                print("Reset Viewpoint %s to current position"%command.split()[1])
-            elif command.split()[1] == "start":
-                new_start_point = move_group.get_current_joint_positions()
-                new_path = {'start':new_start_point, 'end':new_path['end'],'path':new_path['path']}
-                print("Reset start point to current position")
-            elif command.split()[1] == "end":
-                new_end_point = move_group.get_current_joint_positions()
-                new_path = {'start':new_path['start'], 'end':new_end_point,'path':new_path['path']}
-                print("Reset end point to current position")
-            else:
-                print("invalid parameter")
         elif command == 'd':
             break
         else:
