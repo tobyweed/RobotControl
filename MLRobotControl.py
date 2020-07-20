@@ -16,9 +16,10 @@ from xamla_motion.utility import register_asyncio_shutdown_handler
 import socket
 import numpy as np
 import math
+import simplejson as json
 
 HOST = ''
-PORT = 50001        # Port to listen on (non-privileged ports are > 1023)
+PORT = 65000       # Port to listen on (non-privileged ports are > 1023)
 
 async def start_server(move_group):
     velocity = 0.2
@@ -54,9 +55,11 @@ async def start_server(move_group):
                     else:
                         path = pickle.load(file_path)
                         views = path['path']
-                        num_views = len(views.points)
-                        message = str(num_views)
+                        # num_views = len(views.points)
+                        # message = str(num_views)
+                        message = json.dumps(views, iterable_as_array=True)
                         conn.sendall(message.encode("utf-8"))
+                        # conn.sendall(message.encode("utf-8"))
                 elif instruction == "q":
                     running = False
                     conn.sendall(b'bye')
