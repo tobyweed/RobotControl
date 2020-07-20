@@ -115,11 +115,9 @@ async def start_server(move_group):
                     #     conn.sendall(message.encode("utf-8"))
                     else:
                         conn.sendall(b'''usage: - e: execute the path from the start point
-       - l: execute the recorded trajectory of SteamVR if there is one
        - number: go to specified viewpoint
        - v [value]: change the velocity to specified value
        - load [pathname]: load path with specified path name
-       - s: go to the start point of video
        - q: quit the program''')
                 else:
                     conn.sendall(b'NO path is loaded, please load a path first')
