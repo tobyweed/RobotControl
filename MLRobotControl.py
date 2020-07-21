@@ -59,8 +59,8 @@ async def start_server(move_group):
 
                         # convert Poses into JSON-serializeable objects
                         json_poses = []
-                        for p in poses:
-                            json_poses.append({ 'translation' : p.translation, 'rotation' : p.rotation_matrix() })
+                        for i, p in enumerate(poses):
+                            json_poses.append({ 'rotation' : p.rotation_matrix(), 'translation' : p.translation, 'pos_num' : i })
                         
                         message = json.dumps(json_poses, iterable_as_array=True)
                         conn.sendall(message.encode("utf-8"))
