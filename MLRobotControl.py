@@ -54,6 +54,7 @@ async def start_server(move_group):
                         conn.sendall(message.encode("utf-8"))
                     else:
                         path = pickle.load(file_path)
+                        views = path['joint_values'] # reset views global parameter for other commands' benefit
                         joint_values = path['joint_values']
                         poses = path['poses']
 
