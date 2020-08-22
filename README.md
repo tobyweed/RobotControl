@@ -143,7 +143,8 @@ Before setting the viewpoints, it is suggested to look at the png file generated
 The Netgear router has limited resources to handle the connection between devices. When sending videos or photos from the phone to main application, the connection between UR5 and Rosvita may be dropped temporarily, and the message **Heartbeat failure** will appear on the top-right side of Rosvita interface. If trying to control robot during the connection is dropped, the server will exit with an error. Therefore, it is suggested that only move the robot arm when the sending of videos and photos is completed.
 
 ## Author
-- Gunanghan pan
+- Guanghan Pan, 2019
+- Toby Weed, 2020
 
 ## Acknowledgements
 - Thanks to Professor Daniel Scharstein from Middlebury College for overseeing this project.
