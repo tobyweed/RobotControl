@@ -50,6 +50,12 @@ python3 MLRobotControl.py
 
 When the message "MLRobotControl server started" is printed in the terminal, the server has been run successfully, and is ready to listen to commands from MobileLighting.
 
+If this command causes an `OSError: [Errno 98] Address already in use`, it's most likely that the default port (60000) for **MLRobotControl** is already occupied by a previous instance of the server. In this case, run the following commands from Terminal (_not_ from the Rosvita web IDE):
+ * Locate the process running on 60000 with `lsof -i -n -P | grep TCP`
+ * Kill it with `kill -9 <PID>` where PID is the PID indicated in the output of the pior command (should be a 3-5 digit number in the second column of the output, something like `29290`.
+ 
+If running the program causes the error `No module named simplejson`, the Rosvita IDE has for some reason reset what software is downloaded. Fix this by running `sudo easy_install simplejson`
+
 #### Local test client
 
 After the server is running, you could also communicate with the server locally by running the following command(either on the ubuntu terminal or on the Rosvita terminal):
